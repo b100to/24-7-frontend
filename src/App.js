@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Link, useNavigate, Navigate } from 'react-router-dom';
-import { Container, CssBaseline, Box, Typography, BottomNavigation, BottomNavigationAction, Paper } from '@mui/material';
+import { Container, CssBaseline, Box, Typography, BottomNavigation, BottomNavigationAction, Paper, Avatar, Button, CircularProgress } from '@mui/material';
 import CalculateIcon from '@mui/icons-material/Calculate';
 import PeopleIcon from '@mui/icons-material/People';
 import MeetingForm from './components/MeetingForm';
@@ -8,6 +8,10 @@ import MeetingList from './components/MeetingList';
 import MemberList from './components/MemberList';
 import AdminAuth from './components/AdminAuth';
 import MemberStatus from './components/MemberStatus';
+import Login from './components/Login';
+import { auth } from './firebase';
+import { onAuthStateChanged } from 'firebase/auth';
+import NewMemberForm from './components/NewMemberForm';
 
 function AppContent() {
   const [meetings, setMeetings] = useState(() => {
@@ -24,10 +28,47 @@ function AppContent() {
     return saved ? JSON.parse(saved) : [];
   });
 
+  const [user, setUser] = useState(() => {
+    const saved = localStorage.getItem('user');
+    return saved ? JSON.parse(saved) : null;
+  });
+  const [loading, setLoading] = useState(true);
+  const [showNewMemberForm, setShowNewMemberForm] = useState(false);
+
   useEffect(() => {
     localStorage.setItem('meetings', JSON.stringify(meetings));
     localStorage.setItem('members', JSON.stringify(members));
   }, [meetings, members]);
+
+  useEffect(() => {
+    // Firebase 인증 상태 변경 감지
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        const userData = {
+          id: user.uid,
+          name: user.displayName,
+          email: user.email,
+          photoURL: user.photoURL,
+        };
+        setUser(userData);
+        localStorage.setItem('user', JSON.stringify(userData));
+        
+        // 멤버 체크
+        const savedMembers = JSON.parse(localStorage.getItem('members') || '[]');
+        const existingMember = savedMembers.find(m => m.id === userData.id);
+        if (!existingMember) {
+          setShowNewMemberForm(true);
+        }
+      } else {
+        setUser(null);
+        localStorage.removeItem('user');
+      }
+      setLoading(false);
+    });
+
+    // 컴포넌트 언마운트 시 구독 해제
+    return () => unsubscribe();
+  }, []);
 
   const handleSave = (meetingsData) => {
     const newMeetings = [...meetings, ...meetingsData];
@@ -66,6 +107,54 @@ function AppContent() {
     }
   };
 
+  // 로그아웃 처리
+  const handleLogout = async () => {
+    try {
+      await auth.signOut();
+      localStorage.removeItem('user');
+      setUser(null);
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
+  };
+
+  // 로그인 처리
+  const handleLogin = (userData) => {
+    setUser(userData);
+    // localStorage에서 members 다시 로드
+    const savedMembers = JSON.parse(localStorage.getItem('members') || '[]');
+    const existingMember = savedMembers.find(m => m.id === userData.id);
+    
+    if (!existingMember) {
+      setShowNewMemberForm(true);
+    }
+  };
+
+  // 새 멤버 등록
+  const handleNewMember = (memberData) => {
+    const updatedMembers = [...members, memberData];
+    setMembers(updatedMembers);
+    localStorage.setItem('members', JSON.stringify(updatedMembers));
+    setShowNewMemberForm(false);
+  };
+
+  if (loading) {
+    return (
+      <Box sx={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        height: '100vh' 
+      }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  if (!user) {
+    return <Login onLogin={handleLogin} />;
+  }
+
   return (
     <>
       <CssBaseline />
@@ -80,48 +169,80 @@ function AppContent() {
       >
         <Box 
           sx={{ 
-            my: 2,
-            cursor: 'pointer',
-            '&:hover': {
-              opacity: 0.8
-            },
-            transition: 'opacity 0.2s'
+            display: 'flex', 
+            justifyContent: 'space-between', 
+            alignItems: 'center', 
+            py: 2 
           }}
-          onClick={() => navigate('/')}
         >
-          <Typography 
-            variant="h4"
+          <Box 
+            onClick={() => navigate('/')} 
             sx={{ 
-              mb: 0.5,
-              fontWeight: 'bold',
-              color: 'primary.main',
-              fontSize: { 
-                xs: '2.2rem',
-                sm: '2.7rem'
+              cursor: 'pointer',
+              '&:hover': {
+                opacity: 0.8
               },
-              letterSpacing: '-0.5px',
-              textAlign: 'center'
+              transition: 'opacity 0.2s'
             }}
           >
-            24/7
-          </Typography>
-          <Typography 
-            variant="h6"
+            <Typography 
+              variant="h4"
+              sx={{ 
+                mb: 0.5,
+                fontWeight: 'bold',
+                color: 'primary.main',
+                fontSize: { 
+                  xs: '2.2rem',
+                  sm: '2.7rem'
+                },
+                letterSpacing: '-0.5px',
+                textAlign: 'center'
+              }}
+            >
+              24/7
+            </Typography>
+            <Typography 
+              variant="h6"
+              sx={{ 
+                color: 'text.secondary',
+                textAlign: 'center',
+                fontWeight: 500,
+                letterSpacing: '1px',
+                mb: 3,
+                fontSize: { 
+                  xs: '1.1rem',
+                  sm: '1.3rem'
+                },
+                textTransform: 'uppercase'
+              }}
+            >
+              Community Hub
+            </Typography>
+          </Box>
+          
+          <Box 
             sx={{ 
-              color: 'text.secondary',
-              textAlign: 'center',
-              fontWeight: 500,
-              letterSpacing: '1px',
-              mb: 3,
-              fontSize: { 
-                xs: '1.1rem',
-                sm: '1.3rem'
-              },
-              textTransform: 'uppercase'
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: 2 
             }}
           >
-            Community Hub
-          </Typography>
+            <Avatar 
+              src={user.photoURL} 
+              alt={user.name}
+              sx={{ 
+                width: 40, 
+                height: 40 
+              }}
+            />
+            <Button 
+              variant="outlined"
+              size="small"
+              onClick={handleLogout}
+            >
+              로그아웃
+            </Button>
+          </Box>
         </Box>
 
         <Routes>
@@ -198,6 +319,16 @@ function AppContent() {
             }
             setOpenAuth(false);
           }}
+        />
+      )}
+
+      {/* 새 멤버 등록 폼 */}
+      {showNewMemberForm && (
+        <NewMemberForm
+          open={showNewMemberForm}
+          onClose={() => setShowNewMemberForm(false)}
+          onSubmit={handleNewMember}
+          userData={user}
         />
       )}
     </>
