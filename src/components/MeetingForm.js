@@ -8,14 +8,16 @@ import {
   IconButton,
   Divider,
   Stack,
-  Tooltip
+  Tooltip,
+  Autocomplete,
+  Chip
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 
-function MeetingForm({ onSave }) {
+function MeetingForm({ onSave, members }) {
   // localStorage에서 폼 데이터 불러오기
   const [rounds, setRounds] = useState(() => {
     const savedRounds = localStorage.getItem('formRounds');
@@ -149,6 +151,107 @@ function MeetingForm({ onSave }) {
     }
   };
 
+  // 참가자 입력 필드를 Autocomplete로 변경
+  const renderParticipantField = (roundIndex, participantIndex, participant) => (
+    <Box key={participantIndex} sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+      <Autocomplete
+        freeSolo
+        options={members}
+        value={participant.name}
+        onChange={(event, newValue) => {
+          handleParticipantChange(roundIndex, participantIndex, newValue || '');
+        }}
+        onInputChange={(event, newInputValue) => {
+          handleParticipantChange(roundIndex, participantIndex, newInputValue);
+        }}
+        sx={{ flex: 1, mr: 1 }}
+        renderInput={(params) => (
+          <TextField
+            {...params}
+            label={`참가자 ${participantIndex + 1}`}
+            required
+          />
+        )}
+      />
+      {participantIndex === rounds[roundIndex].participants.length - 1 ? (
+        <IconButton onClick={() => handleAddParticipant(roundIndex)} color="primary">
+          <AddIcon />
+        </IconButton>
+      ) : (
+        <IconButton 
+          onClick={() => handleRemoveParticipant(roundIndex, participantIndex)} 
+          color="error"
+        >
+          <RemoveIcon />
+        </IconButton>
+      )}
+    </Box>
+  );
+
+  // 금액 빠른 입력 처리 함수
+  const handleQuickAmount = (roundIndex, amount) => {
+    const currentAmount = Number(rounds[roundIndex].totalAmount) || 0;
+    const newAmount = currentAmount + amount;
+    handleTotalAmountChange(roundIndex, newAmount.toString());
+  };
+
+  // 금액 입력 필드와 빠른 입력 버튼 렌더링
+  const renderAmountField = (roundIndex, round) => (
+    <Box sx={{ mb: 3 }}>
+      <TextField
+        fullWidth
+        label={`${round.round}차 총 금액`}
+        type="number"
+        value={round.totalAmount}
+        onChange={(e) => handleTotalAmountChange(roundIndex, e.target.value)}
+        sx={{ mb: 1 }}
+        required
+      />
+      <Box sx={{ 
+        display: 'flex', 
+        gap: 1, 
+        flexWrap: 'wrap',
+        mt: 1 
+      }}>
+        <Chip 
+          label="+ 10만원" 
+          onClick={() => handleQuickAmount(roundIndex, 100000)}
+          color="primary"
+          variant="outlined"
+          sx={{ borderRadius: 1 }}
+        />
+        <Chip 
+          label="+ 1만원" 
+          onClick={() => handleQuickAmount(roundIndex, 10000)}
+          color="primary"
+          variant="outlined"
+          sx={{ borderRadius: 1 }}
+        />
+        <Chip 
+          label="+ 1천원" 
+          onClick={() => handleQuickAmount(roundIndex, 1000)}
+          color="primary"
+          variant="outlined"
+          sx={{ borderRadius: 1 }}
+        />
+        <Chip 
+          label="+ 100원" 
+          onClick={() => handleQuickAmount(roundIndex, 100)}
+          color="primary"
+          variant="outlined"
+          sx={{ borderRadius: 1 }}
+        />
+        <Chip 
+          label="초기화" 
+          onClick={() => handleTotalAmountChange(roundIndex, '')}
+          color="error"
+          variant="outlined"
+          sx={{ borderRadius: 1 }}
+        />
+      </Box>
+    </Box>
+  );
+
   return (
     <Paper sx={{ p: 3, mb: 3 }}>
       <Box component="form" onSubmit={handleSubmit}>
@@ -192,36 +295,11 @@ function MeetingForm({ onSave }) {
               sx={{ mb: 2 }}
             />
 
-            {round.participants.map((participant, participantIndex) => (
-              <Box key={participantIndex} sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                <TextField
-                  label={`참가자 ${participantIndex + 1}`}
-                  value={participant.name}
-                  onChange={(e) => handleParticipantChange(roundIndex, participantIndex, e.target.value)}
-                  sx={{ mr: 1, flex: 1 }}
-                  required
-                />
-                {participantIndex === round.participants.length - 1 ? (
-                  <IconButton onClick={() => handleAddParticipant(roundIndex)} color="primary">
-                    <AddIcon />
-                  </IconButton>
-                ) : (
-                  <IconButton onClick={() => handleRemoveParticipant(roundIndex, participantIndex)} color="error">
-                    <RemoveIcon />
-                  </IconButton>
-                )}
-              </Box>
-            ))}
+            {round.participants.map((participant, participantIndex) => 
+              renderParticipantField(roundIndex, participantIndex, participant)
+            )}
             
-            <TextField
-              fullWidth
-              label={`${round.round}차 총 금액`}
-              type="number"
-              value={round.totalAmount}
-              onChange={(e) => handleTotalAmountChange(roundIndex, e.target.value)}
-              sx={{ mt: 1, mb: 2 }}
-              required
-            />
+            {renderAmountField(roundIndex, round)}
 
             {roundIndex < rounds.length - 1 && <Divider sx={{ my: 3 }} />}
           </Box>
