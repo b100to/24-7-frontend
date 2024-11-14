@@ -4,9 +4,20 @@ import {
   Typography,
   Box,
   Grid,
-  Chip
+  List,
+  ListItem,
+  ListItemText,
+  ListItemAvatar,
+  Avatar,
+  Chip,
+  Divider,
+  Collapse,
+  Button
 } from '@mui/material';
 import { Doughnut } from 'react-chartjs-2';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import ExpandLessIcon from '@mui/icons-material/ExpandLess';
+import PersonIcon from '@mui/icons-material/Person';
 import {
   Chart as ChartJS,
   ArcElement,
@@ -14,7 +25,6 @@ import {
   Legend
 } from 'chart.js';
 import PeopleIcon from '@mui/icons-material/People';
-import PersonIcon from '@mui/icons-material/Person';
 import SupervisorAccountIcon from '@mui/icons-material/SupervisorAccount';
 import EmojiPeopleIcon from '@mui/icons-material/EmojiPeople';
 
@@ -153,6 +163,62 @@ function MemberStatus({ members, onAdminClick }) {
     }
   };
 
+  const [showMembers, setShowMembers] = useState(false);
+
+  // 모임원 분류
+  const staffMembers = members.filter(m => m.isStaff);
+  const regularMembers = members.filter(m => !m.isStaff && !m.isNewbie);
+  const newbieMembers = members.filter(m => m.isNewbie);
+
+  // 멤버 목록 컴포넌트
+  const MemberList = ({ title, members, chipColor }) => (
+    <>
+      <Typography variant="subtitle2" sx={{ mt: 2, mb: 1, color: 'text.secondary' }}>
+        {title} ({members.length}명)
+      </Typography>
+      <List dense>
+        {members.map((member, index) => (
+          <ListItem
+            key={index}
+            sx={{
+              borderRadius: 1,
+              '&:hover': {
+                backgroundColor: 'action.hover'
+              }
+            }}
+          >
+            <ListItemAvatar>
+              <Avatar sx={{ bgcolor: chipColor }}>
+                <PersonIcon />
+              </Avatar>
+            </ListItemAvatar>
+            <ListItemText
+              primary={member.name}
+              secondary={
+                <Box component="span" sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                  {member.gender && (
+                    <Chip 
+                      label={member.gender} 
+                      size="small" 
+                      sx={{ height: 20 }}
+                    />
+                  )}
+                  {member.location && (
+                    <Chip 
+                      label={member.location} 
+                      size="small" 
+                      sx={{ height: 20 }}
+                    />
+                  )}
+                </Box>
+              }
+            />
+          </ListItem>
+        ))}
+      </List>
+    </>
+  );
+
   return (
     <Paper sx={{ p: 3, mb: 3 }}>
       {/* 제목을 클릭 가능하게 만듦 */}
@@ -276,6 +342,52 @@ function MemberStatus({ members, onAdminClick }) {
               size="small"
             />
           ))}
+      </Box>
+
+      {/* 모임원 목록 섹션 */}
+      <Box sx={{ mt: 4 }}>
+        <Button
+          fullWidth
+          onClick={() => setShowMembers(!showMembers)}
+          endIcon={showMembers ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+          sx={{ mb: 1 }}
+        >
+          모임원 목록 {showMembers ? '접기' : '보기'}
+        </Button>
+        
+        <Collapse in={showMembers}>
+          <Box sx={{ mt: 2 }}>
+            {staffMembers.length > 0 && (
+              <>
+                <MemberList 
+                  title="운영진" 
+                  members={staffMembers} 
+                  chipColor="primary.main" 
+                />
+                <Divider sx={{ my: 2 }} />
+              </>
+            )}
+            
+            {regularMembers.length > 0 && (
+              <>
+                <MemberList 
+                  title="정회원" 
+                  members={regularMembers} 
+                  chipColor="success.main" 
+                />
+                <Divider sx={{ my: 2 }} />
+              </>
+            )}
+            
+            {newbieMembers.length > 0 && (
+              <MemberList 
+                title="신입회원" 
+                members={newbieMembers} 
+                chipColor="warning.main" 
+              />
+            )}
+          </Box>
+        </Collapse>
       </Box>
     </Paper>
   );

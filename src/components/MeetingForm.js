@@ -82,7 +82,13 @@ function MeetingForm({ onSave, members }) {
   // 참가자 이름 변경
   const handleParticipantChange = (roundIndex, participantIndex, value) => {
     const newRounds = [...rounds];
-    newRounds[roundIndex].participants[participantIndex].name = value;
+    if (typeof value === 'object' && value !== null) {
+      // value가 객체인 경우 (멤버 객체가 선택된 경우)
+      newRounds[roundIndex].participants[participantIndex].name = value.name;
+    } else {
+      // value가 문자열인 경우 (직접 입력된 경우)
+      newRounds[roundIndex].participants[participantIndex].name = value;
+    }
     setRounds(newRounds);
   };
 
@@ -139,16 +145,18 @@ function MeetingForm({ onSave, members }) {
 
   // 폼 초기화 함수
   const handleReset = () => {
-    if (window.confirm('입력한 내용이 모두 초기화됩니다. 계속하시겠습니까?')) {
-      const initialRound = {
-        round: 1,
-        participants: [{ name: '' }],
-        totalAmount: '',
-        location: ''
-      };
-      setRounds([initialRound]);
-      localStorage.setItem('formRounds', JSON.stringify([initialRound]));
-    }
+    setRounds([{
+      round: 1,
+      participants: [{ name: '' }],
+      totalAmount: '',
+      location: ''
+    }]);
+    localStorage.setItem('formRounds', JSON.stringify([{
+      round: 1,
+      participants: [{ name: '' }],
+      totalAmount: '',
+      location: ''
+    }]));
   };
 
   // 참가자 입력 필드를 Autocomplete로 변경
@@ -157,9 +165,15 @@ function MeetingForm({ onSave, members }) {
       <Autocomplete
         freeSolo
         options={members}
+        getOptionLabel={(option) => {
+          // option이 문자열이거나 null인 경우 처리
+          if (typeof option === 'string' || !option) return option || '';
+          // option이 객체인 경우
+          return option.name || '';
+        }}
         value={participant.name}
         onChange={(event, newValue) => {
-          handleParticipantChange(roundIndex, participantIndex, newValue || '');
+          handleParticipantChange(roundIndex, participantIndex, newValue);
         }}
         onInputChange={(event, newInputValue) => {
           handleParticipantChange(roundIndex, participantIndex, newInputValue);
