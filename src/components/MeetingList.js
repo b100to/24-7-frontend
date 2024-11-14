@@ -1,52 +1,92 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { 
   Paper, 
-  List, 
-  ListItem, 
-  ListItemText, 
-  Typography 
+  Typography, 
+  Box,
+  IconButton,
+  Divider
 } from '@mui/material';
-import axios from 'axios';
+import DeleteIcon from '@mui/icons-material/Delete';
 
-const API_URL = 'http://localhost:8080';
+function MeetingList({ meetings, onDelete }) {
+  if (!meetings || meetings.length === 0) {
+    return null;
+  }
 
-function MeetingList({ onSelectMeeting }) {
-  const [meetings, setMeetings] = useState([]);
-
-  useEffect(() => {
-    const fetchMeetings = async () => {
-      try {
-        const response = await axios.get(`${API_URL}/meetings`);
-        setMeetings(response.data);
-      } catch (error) {
-        console.error('Failed to fetch meetings:', error);
+  // 참가자별 총 금액 계산
+  const calculateTotalPerPerson = (meetings) => {
+    const totals = {};
+    meetings.forEach(meeting => {
+      meeting.participants.forEach(participant => {
+        totals[participant] = (totals[participant] || 0) + meeting.perPerson;
+      });
+    });
+    
+    // 같은 금액을 낸 사람들끼리 그룹화
+    const groupedTotals = {};
+    Object.entries(totals).forEach(([person, amount]) => {
+      if (!groupedTotals[amount]) {
+        groupedTotals[amount] = [];
       }
-    };
-
-    fetchMeetings();
-  }, []);
+      groupedTotals[amount].push(person);
+    });
+    
+    return groupedTotals;
+  };
 
   return (
     <Paper sx={{ p: 3 }}>
-      <Typography variant="h6" gutterBottom>
-        모임 목록
+      {meetings.map((meeting, index) => (
+        <Box key={index} sx={{ mb: 4 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+            <Typography variant="h6" sx={{ flex: 1 }}>
+              [{meeting.round} 정산 내역]
+            </Typography>
+            <IconButton 
+              onClick={() => onDelete(index)}
+              color="error"
+              size="small"
+            >
+              <DeleteIcon />
+            </IconButton>
+          </Box>
+
+          <Typography variant="body1" sx={{ mb: 1 }}>
+            •총 금액
+          </Typography>
+          <Typography variant="body1" sx={{ mb: 2, pl: 2 }}>
+            {meeting.totalAmount.toLocaleString()}원
+          </Typography>
+
+          <Typography variant="body1" sx={{ mb: 1 }}>
+            •참석자
+          </Typography>
+          <Typography variant="body1" sx={{ mb: 2, pl: 2 }}>
+            {meeting.participants.join(' / ')} ({meeting.participants.length}명)
+          </Typography>
+
+          {index < meetings.length - 1 && (
+            <Typography sx={{ my: 3, textAlign: 'center', color: 'text.secondary' }}>
+              ***
+            </Typography>
+          )}
+        </Box>
+      ))}
+
+      <Divider sx={{ my: 3 }}>
+        <Typography sx={{ color: 'text.secondary' }}>-----</Typography>
+      </Divider>
+
+      <Typography variant="body1" sx={{ mb: 2 }}>
+        •인당 정산금액
       </Typography>
-      <List>
-        {meetings.map((meeting) => (
-          <ListItem 
-            key={meeting.id} 
-            button 
-            onClick={() => onSelectMeeting(meeting)}
-          >
-            <ListItemText 
-              primary={meeting.title}
-              secondary={`날짜: ${new Date(meeting.date).toLocaleDateString()} | 총액: ${meeting.total_amount.toLocaleString()}원`}
-            />
-          </ListItem>
-        ))}
-      </List>
+      {Object.entries(calculateTotalPerPerson(meetings)).map(([amount, people], index) => (
+        <Typography key={index} variant="body1" sx={{ mb: 1, pl: 2 }}>
+          {people.join(' / ')} 》 {Number(amount).toLocaleString()}원
+        </Typography>
+      ))}
     </Paper>
   );
 }
 
-export default MeetingList; 
+export default MeetingList;
