@@ -1,13 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { Container, CssBaseline, Box, Typography } from '@mui/material';
+import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
+import { Container, CssBaseline, Box, Typography, BottomNavigation, BottomNavigationAction, Paper } from '@mui/material';
+import CalculateIcon from '@mui/icons-material/Calculate';
+import PeopleIcon from '@mui/icons-material/People';
 import MeetingForm from './components/MeetingForm';
 import MeetingList from './components/MeetingList';
+import MemberList from './components/MemberList';
 
 function App() {
   const [meetings, setMeetings] = useState(() => {
     const savedMeetings = localStorage.getItem('meetings');
     return savedMeetings ? JSON.parse(savedMeetings) : [];
   });
+
+  const [value, setValue] = React.useState(0);
 
   useEffect(() => {
     localStorage.setItem('meetings', JSON.stringify(meetings));
@@ -25,40 +31,78 @@ function App() {
   };
 
   return (
-    <>
+    <BrowserRouter>
       <CssBaseline />
       <Container 
         maxWidth={false} 
         disableGutters 
         sx={{
-          maxWidth: '600px',  // 모바일 화면에 맞는 최대 너비
-          px: 2  // 좌우 패딩
+          maxWidth: '600px',
+          px: 2,
+          pb: 7  // 하단 네비게이션 공간 확보
         }}
       >
-        <Box sx={{ 
-          my: 2,
-          position: 'relative'
-        }}>
+        <Box sx={{ my: 2 }}>
           <Typography 
-            variant="h6" 
+            variant="h4"
             sx={{ 
               mb: 3,
               fontWeight: 'bold',
-              color: '#1976d2'
+              color: '#000000',
+              fontSize: { 
+                xs: '2rem',
+                sm: '2.5rem'
+              },
+              letterSpacing: '-0.5px'
             }}
           >
-            2/47 정산 프로그램
+            24/7 정산 프로그램
           </Typography>
-          <MeetingForm onSave={handleSave} />
-          {meetings.length > 0 && (
-            <MeetingList 
-              meetings={meetings} 
-              onDelete={handleDelete}
-            />
-          )}
+          
+          <Routes>
+            <Route path="/" element={
+              <>
+                <MeetingForm onSave={handleSave} />
+                {meetings.length > 0 && (
+                  <MeetingList 
+                    meetings={meetings} 
+                    onDelete={handleDelete}
+                  />
+                )}
+              </>
+            } />
+            <Route path="/members" element={<MemberList />} />
+          </Routes>
         </Box>
       </Container>
-    </>
+
+      {/* 하단 네비게이션 */}
+      <Paper 
+        sx={{ position: 'fixed', bottom: 0, left: 0, right: 0 }} 
+        elevation={3}
+      >
+        <BottomNavigation
+          value={value}
+          onChange={(event, newValue) => {
+            setValue(newValue);
+          }}
+          showLabels
+        >
+          <BottomNavigationAction 
+            label="정산하기" 
+            icon={<CalculateIcon />} 
+            component={Link}
+            to="/"
+          />
+          <BottomNavigationAction 
+            label="모임원 관리" 
+            icon={<PeopleIcon />} 
+            component={Link}
+            to="/members"
+          />
+        </BottomNavigation>
+      </Paper>
+    </BrowserRouter>
   );
 }
 

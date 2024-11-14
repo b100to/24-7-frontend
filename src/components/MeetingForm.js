@@ -7,11 +7,13 @@ import {
   Box,
   IconButton,
   Divider,
-  Stack
+  Stack,
+  Tooltip
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
 import RefreshIcon from '@mui/icons-material/Refresh';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 
 function MeetingForm({ onSave }) {
   // localStorage에서 폼 데이터 불러오기
@@ -89,6 +91,15 @@ function MeetingForm({ onSave }) {
     setRounds(newRounds);
   };
 
+  // 이전 차수 참가자 복사 함수
+  const handleCopyParticipants = (roundIndex) => {
+    if (roundIndex === 0) return; // 1차는 복사할 이전 참가자가 없음
+    
+    const newRounds = [...rounds];
+    newRounds[roundIndex].participants = [...rounds[roundIndex - 1].participants];
+    setRounds(newRounds);
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
     
@@ -147,6 +158,18 @@ function MeetingForm({ onSave }) {
               <Typography variant="h6" sx={{ flex: 1 }}>
                 {round.round}차
               </Typography>
+              {roundIndex > 0 && (  // 2차부터 복사 버튼 표시
+                <Tooltip title="이전 차수 참가자 복사">
+                  <IconButton 
+                    onClick={() => handleCopyParticipants(roundIndex)}
+                    color="primary"
+                    size="small"
+                    sx={{ mr: 1 }}
+                  >
+                    <ContentCopyIcon />
+                  </IconButton>
+                </Tooltip>
+              )}
               {roundIndex === rounds.length - 1 ? (
                 <IconButton onClick={handleAddRound} color="primary">
                   <AddIcon />
@@ -208,27 +231,44 @@ function MeetingForm({ onSave }) {
           direction="row" 
           spacing={2} 
           sx={{ mt: 2 }}
+          justifyContent="center"
         >
           <Button 
             variant="contained" 
             type="submit" 
             fullWidth
-            color="primary"
+            sx={{
+              backgroundColor: '#63b3ed',  // 파스텔 파란색
+              '&:hover': {
+                backgroundColor: '#4299e1',  // 호버 시 약간 진한 파란색
+              },
+              boxShadow: 'none',  // 그림자 제거
+              borderRadius: '8px',  // 모서리 더 둥글게
+            }}
           >
             전체 정산하기
           </Button>
           <Button
-            variant="outlined"
+            variant="contained"
             onClick={handleReset}
-            color="error"
             sx={{ 
-              minWidth: '50px',  // 버튼 최소 너비 설정
-              padding: '6px',    // 패딩 조정
-              '& .MuiButton-startIcon': {  // startIcon 스타일 조정
-                margin: 0,                 // 기본 마진 제거
-                position: 'absolute',      // 절대 위치로 설정
-                left: '50%',              // 왼쪽에서 50% 위치
-                transform: 'translateX(-50%)'  // 중앙 정렬을 위한 이동
+              minWidth: '48px',
+              width: '48px',
+              height: '48px',
+              padding: 0,
+              backgroundColor: '#fc8181',  // 파스텔 빨간색
+              '&:hover': {
+                backgroundColor: '#f56565',  // 호버 시 약간 진한 빨간색
+              },
+              boxShadow: 'none',  // 그림자 제거
+              borderRadius: '8px',  // 모서리 더 둥글게
+              '& .MuiButton-startIcon': {
+                margin: 0,
+                position: 'absolute',
+                left: '50%',
+                top: '50%',
+                transform: 'translate(-50%, -50%)',
+                color: '#ffffff'
               }
             }}
             startIcon={<RefreshIcon />}
