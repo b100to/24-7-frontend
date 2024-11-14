@@ -6,10 +6,12 @@ import {
   Typography, 
   Box,
   IconButton,
-  Divider
+  Divider,
+  Stack
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
+import RefreshIcon from '@mui/icons-material/Refresh';
 
 function MeetingForm({ onSave }) {
   // localStorage에서 폼 데이터 불러오기
@@ -18,7 +20,8 @@ function MeetingForm({ onSave }) {
     return savedRounds ? JSON.parse(savedRounds) : [{
       round: 1,
       participants: [{ name: '' }],
-      totalAmount: ''
+      totalAmount: '',
+      location: ''
     }];
   });
 
@@ -32,7 +35,8 @@ function MeetingForm({ onSave }) {
     const newRound = {
       round: rounds.length + 1,
       participants: [{ name: '' }],
-      totalAmount: ''
+      totalAmount: '',
+      location: ''
     };
     setRounds([...rounds, newRound]);
   };
@@ -48,6 +52,13 @@ function MeetingForm({ onSave }) {
       }));
       setRounds(updatedRounds);
     }
+  };
+
+  // 장소 변경 핸들러 추가
+  const handleLocationChange = (roundIndex, value) => {
+    const newRounds = [...rounds];
+    newRounds[roundIndex].location = value;
+    setRounds(newRounds);
   };
 
   // 참가자 추가
@@ -96,6 +107,7 @@ function MeetingForm({ onSave }) {
     // 정산 데이터 생성
     const meetingsData = rounds.map(round => ({
       round: `${round.round}차`,
+      location: round.location,
       participants: round.participants.map(p => p.name),
       totalAmount: Number(round.totalAmount),
       perPerson: Math.round(Number(round.totalAmount) / round.participants.length),
@@ -105,12 +117,25 @@ function MeetingForm({ onSave }) {
     // 모든 차수 정산 데이터를 한 번에 저장
     onSave(meetingsData);
     
-    // 폼 초기화
-    setRounds([{
-      round: 1,
-      participants: [{ name: '' }],
-      totalAmount: ''
-    }]);
+    // 성공 메시지 표시
+    alert('정산이 완료되었습니다!');
+    
+    // localStorage에서 폼 데이터 유지
+    localStorage.setItem('formRounds', JSON.stringify(rounds));
+  };
+
+  // 폼 초기화 함수
+  const handleReset = () => {
+    if (window.confirm('입력한 내용이 모두 초기화됩니다. 계속하시겠습니까?')) {
+      const initialRound = {
+        round: 1,
+        participants: [{ name: '' }],
+        totalAmount: '',
+        location: ''
+      };
+      setRounds([initialRound]);
+      localStorage.setItem('formRounds', JSON.stringify([initialRound]));
+    }
   };
 
   return (
@@ -135,6 +160,14 @@ function MeetingForm({ onSave }) {
                 </IconButton>
               )}
             </Box>
+
+            <TextField
+              fullWidth
+              label="장소 (선택사항)"
+              value={round.location || ''}
+              onChange={(e) => handleLocationChange(roundIndex, e.target.value)}
+              sx={{ mb: 2 }}
+            />
 
             {round.participants.map((participant, participantIndex) => (
               <Box key={participantIndex} sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
@@ -171,14 +204,36 @@ function MeetingForm({ onSave }) {
           </Box>
         ))}
         
-        <Button 
-          variant="contained" 
-          type="submit" 
-          fullWidth
+        <Stack 
+          direction="row" 
+          spacing={2} 
           sx={{ mt: 2 }}
         >
-          전체 정산하기
-        </Button>
+          <Button 
+            variant="contained" 
+            type="submit" 
+            fullWidth
+            color="primary"
+          >
+            전체 정산하기
+          </Button>
+          <Button
+            variant="outlined"
+            onClick={handleReset}
+            color="error"
+            sx={{ 
+              minWidth: '50px',  // 버튼 최소 너비 설정
+              padding: '6px',    // 패딩 조정
+              '& .MuiButton-startIcon': {  // startIcon 스타일 조정
+                margin: 0,                 // 기본 마진 제거
+                position: 'absolute',      // 절대 위치로 설정
+                left: '50%',              // 왼쪽에서 50% 위치
+                transform: 'translateX(-50%)'  // 중앙 정렬을 위한 이동
+              }
+            }}
+            startIcon={<RefreshIcon />}
+          />
+        </Stack>
       </Box>
     </Paper>
   );

@@ -12,3 +12,21 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 } 
+
+@media (max-width: 600px) {
+html {
+  font-size: 14px;
+}
+}
+
+@media (max-width: 600px) {
+button, 
+input,
+.MuiTextField-root {
+  min-height: 48px;
+}
+
+.MuiButton-root {
+  padding: 8px 16px;
+}
+}

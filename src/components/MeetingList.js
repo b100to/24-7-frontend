@@ -40,7 +40,7 @@ function MeetingList({ meetings, onDelete }) {
         <Box key={index} sx={{ mb: 4 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
             <Typography variant="h6" sx={{ flex: 1 }}>
-              [{meeting.round} 정산 내역]
+              [{meeting.round} 정산 내역{meeting.location ? ` - ${meeting.location}` : ''}]
             </Typography>
             <IconButton 
               onClick={() => onDelete(index)}
