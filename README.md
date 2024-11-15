@@ -1,70 +1,81 @@
-# Getting Started with Create React App
+# 24/7 Community Hub
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+모임 정산 및 멤버 관리를 위한 웹 애플리케이션입니다.
 
-## Available Scripts
+## 주요 기능
 
-In the project directory, you can run:
+### 1. 정산 관리
+- 다중 차수 정산 입력
+- 참가자별 금액 자동 계산
+- 정산 내역 저장 및 조회
+- 빠른 금액 입력 기능
+- 이전 차수 참가자 복사 기능
 
-### `npm start`
+### 2. 모임원 관리
+- 모임원 등록/수정/삭제
+- 모임원 상태 확인
+- 신규/기존 회원 구분
+- 모임원 정보 관리 (이름, 출생연도, 성별, 지역 등)
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+### 3. 사용자 인증
+- Google 로그인 연동
+- 관리자 권한 관리
+- 신규 가입자 정보 입력
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+## 기술 스택
 
-### `npm test`
+- React
+- Firebase
+  - Authentication (구글 로그인)
+  - Firestore Database (데이터 저장)
+- Material-UI (MUI)
+- React Router
+- date-fns
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+## 데이터 구조
 
-### `npm run build`
+### Firestore Collections
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+1. `members`
+   - 모임원 정보 저장
+   - 이름, 출생연도, 성별, 지역 등
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+2. `meetings`
+   - 정산 내역 저장
+   - 차수, 금액, 참가자, 장소 등
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+3. `admins`
+   - 관리자 권한 관리
 
-### `npm run eject`
+## 설치 및 실행
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+# 프로젝트 클론
+git clone [repository-url]
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+# 디렉토리 이동
+cd meeting-calculator-frontend
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+# 의존성 설치
+npm install
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+# 개발 서버 실행
+npm start
 
-## Learn More
+## 환경 변수 설정
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+`.env` 파일을 생성하고 Firebase 설정 정보를 입력:
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+REACT_APP_FIREBASE_API_KEY=your-api-key
+REACT_APP_FIREBASE_AUTH_DOMAIN=your-auth-domain
+REACT_APP_FIREBASE_PROJECT_ID=your-project-id
+REACT_APP_FIREBASE_STORAGE_BUCKET=your-storage-bucket
+REACT_APP_FIREBASE_MESSAGING_SENDER_ID=your-messaging-sender-id
+REACT_APP_FIREBASE_APP_ID=your-app-id
 
-### Code Splitting
+## 배포
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+Vercel을 통해 자동 배포됩니다.
 
-### Analyzing the Bundle Size
+## 라이선스
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+MIT License

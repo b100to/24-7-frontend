@@ -3,8 +3,8 @@ import { BrowserRouter, Routes, Route, Link, useNavigate, Navigate } from 'react
 import { Container, CssBaseline, Box, Typography, BottomNavigation, BottomNavigationAction, Paper, Avatar, Button, CircularProgress } from '@mui/material';
 import CalculateIcon from '@mui/icons-material/Calculate';
 import PeopleIcon from '@mui/icons-material/People';
-import MeetingForm from './components/MeetingForm';
-import MeetingList from './components/MeetingList';
+import MeetingForm from './components/CalculationForm';
+import MeetingList from './components/CalculationHistory';
 import MemberList from './components/MemberList';
 import AdminAuth from './components/AdminAuth';
 import MemberStatus from './components/MemberStatus';

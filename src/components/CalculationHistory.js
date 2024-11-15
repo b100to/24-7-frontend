@@ -8,7 +8,7 @@ import {
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 
-function MeetingList({ meetings, onDelete }) {
+function CalculationHistory({ meetings, onDelete }) {
   if (!meetings || meetings.length === 0) {
     return null;
   }
@@ -40,7 +40,7 @@ function MeetingList({ meetings, onDelete }) {
         <Box key={meeting.id || index} sx={{ mb: 4 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
             <Typography variant="h6" sx={{ flex: 1 }}>
-              [{meeting.round} 정산 내역{meeting.location ? ` - ${meeting.location}` : ''}]
+              [{meeting.round}차 정산 내역{meeting.location ? ` - ${meeting.location}` : ''}]
             </Typography>
             <IconButton 
               onClick={() => onDelete(meeting.id)}
@@ -82,4 +82,4 @@ function MeetingList({ meetings, onDelete }) {
   );
 }
 
-export default MeetingList;
+export default CalculationHistory;

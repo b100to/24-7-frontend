@@ -196,7 +196,7 @@ function MeetingForm({ onSave, members }) {
     <Box sx={{ mb: 3 }}>
       <TextField
         fullWidth
-        label={`${round.round}차 총 금액`}
+        label={`${roundIndex + 1}차 총 금액`}
         type="number"
         value={round.totalAmount}
         onChange={(e) => handleTotalAmountChange(roundIndex, e.target.value)}
