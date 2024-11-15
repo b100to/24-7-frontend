@@ -26,7 +26,6 @@ import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import { format } from 'date-fns';  // 날짜 포맷팅을 위해 추가
 import { ko } from 'date-fns/locale';  // 한국어 로케일
-import AdminAuth from './AdminAuth';
 import { useNavigate } from 'react-router-dom';
 
 // 서울시 구 목록
