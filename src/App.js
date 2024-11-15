@@ -17,7 +17,8 @@ import {
   getDocs, 
   setDoc, 
   doc,
-  onSnapshot 
+  onSnapshot,
+  getDoc
 } from 'firebase/firestore';
 import { db } from './firebase';
 
@@ -78,6 +79,20 @@ function AppContent() {
     return () => unsubscribe();
   }, []);
 
+  useEffect(() => {
+    // Firestore에서 실시간으로 멤버 데이터 가져오기
+    const membersRef = collection(db, 'members');
+    const unsubscribe = onSnapshot(membersRef, (snapshot) => {
+      const loadedMembers = snapshot.docs.map(doc => ({
+        ...doc.data()
+      }));
+      setMembers(loadedMembers);
+      console.log('멤버 데이터 업데이트:', loadedMembers);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
   const handleSave = (meetingsData) => {
     const newMeetings = [...meetings, ...meetingsData];
     setMeetings(newMeetings);
@@ -132,13 +147,14 @@ function AppContent() {
       setUser(userData);
       
       // 이미 가입한 멤버인지 확인
-      const memberDoc = await getDocs(doc(db, 'members', userData.id));
+      const memberRef = doc(db, 'members', userData.id);
+      const memberDoc = await getDoc(memberRef);
       
       if (!memberDoc.exists()) {
-        console.log('새 사용자 감지됨:', userData.email); // 디버깅용
+        console.log('새 사용자 감지됨:', userData.email);
         setShowNewMemberForm(true);
       } else {
-        console.log('기존 멤버 로그인:', userData.email); // 디버깅용
+        console.log('기존 멤버 로그인:', userData.email);
       }
     } catch (error) {
       console.error('로그인 처리 에러:', error);
@@ -148,13 +164,13 @@ function AppContent() {
   // 새 멤버 등록
   const handleNewMember = async (memberData) => {
     try {
-      // Firestore에 저장
-      await setDoc(doc(db, 'members', memberData.id), {
+      const memberRef = doc(db, 'members', memberData.id);
+      await setDoc(memberRef, {
         ...memberData,
         createdAt: new Date().toISOString()
       });
       
-      console.log('새 멤버 등록됨:', memberData); // 디버깅용
+      console.log('새 멤버 등록됨:', memberData);
       setShowNewMemberForm(false);
     } catch (error) {
       console.error('멤버 등록 에러:', error);
