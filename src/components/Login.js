@@ -1,6 +1,6 @@
 import React from 'react';
-import { signInWithPopup } from 'firebase/auth';
-import { auth, googleProvider } from '../firebase';
+import { signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
+import { auth } from '../firebase';
 import { 
   Button, 
   Paper, 
@@ -19,23 +19,31 @@ function Login({ onLogin }) {
     try {
       setLoading(true);
       setError(null);
-      const result = await signInWithPopup(auth, googleProvider);
-      const user = result.user;
+      const provider = new GoogleAuthProvider();
       
-      // 사용자 정보를 저장
-      const userData = {
-        id: user.uid,
-        name: user.displayName,
-        email: user.email,
-        photoURL: user.photoURL,
-        // 최초 로그인 시간
-        createdAt: new Date().toISOString(),
-      };
+      provider.setCustomParameters({
+        prompt: 'select_account'
+      });
+
+      const result = await signInWithPopup(auth, provider);
       
-      localStorage.setItem('user', JSON.stringify(userData));
-      onLogin(userData);
+      if (result.user) {
+        console.log('로그인 성공:', result.user);
+        
+        // 사용자 정보를 저장
+        const userData = {
+          id: result.user.uid,
+          name: result.user.displayName,
+          email: result.user.email,
+          photoURL: result.user.photoURL,
+          createdAt: new Date().toISOString(),
+        };
+        
+        localStorage.setItem('user', JSON.stringify(userData));
+        onLogin(userData);
+      }
     } catch (error) {
-      console.error('Login failed:', error);
+      console.error('로그인 실패:', error);
       setError('로그인에 실패했습니다. 다시 시도해주세요.');
     } finally {
       setLoading(false);

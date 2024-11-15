@@ -86,8 +86,13 @@ function AppContent() {
         id: doc.id,
         ...doc.data()
       }));
-      console.log('멤버 데이터 업데이트:', loadedMembers);
       setMembers(loadedMembers);
+      
+      // 현재 로그인한 사용자가 이미 등록된 멤버인지 확인
+      const isExistingMember = loadedMembers.some(member => member.id === user.uid);
+      if (!isExistingMember) {
+        setShowNewMemberForm(true);  // 신규 사용자만 폼 표시
+      }
     });
 
     return () => unsubscribe();
