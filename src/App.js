@@ -192,17 +192,12 @@ function AppContent() {
   // 새 멤버 등록
   const handleNewMember = async (memberData) => {
     try {
-      const memberRef = doc(db, 'members', memberData.id);
-      await setDoc(memberRef, {
-        ...memberData,
-        createdAt: new Date().toISOString()
-      });
-      
-      console.log('새 멤버 등록됨:', memberData);
-      setShowNewMemberForm(false);
+      const membersRef = collection(db, 'members');
+      await addDoc(membersRef, memberData);
+      setShowNewMemberForm(false);  // 성공적으로 저장된 경우에만 폼 닫기
     } catch (error) {
-      console.error('멤버 등록 에러:', error);
-      alert('멤버 등록에 실패했습니다. 다시 시도해주세요.');
+      console.error('모임원 등록 실패:', error);
+      alert('모임원 등록에 실패했습니다.');
     }
   };
 
