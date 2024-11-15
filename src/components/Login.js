@@ -32,14 +32,13 @@ function Login({ onLogin }) {
         
         // 사용자 정보를 저장
         const userData = {
-          id: result.user.uid,
+          uid: result.user.uid,
           name: result.user.displayName,
           email: result.user.email,
           photoURL: result.user.photoURL,
-          createdAt: new Date().toISOString(),
         };
         
-        localStorage.setItem('user', JSON.stringify(userData));
+        console.log('저장된 사용자 정보:', userData);
         onLogin(userData);
       }
     } catch (error) {

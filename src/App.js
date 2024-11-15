@@ -19,7 +19,10 @@ import {
   onSnapshot,
   getDoc,
   addDoc,
-  deleteDoc
+  deleteDoc,
+  query,
+  where,
+  getDocs
 } from 'firebase/firestore';
 import { db } from './firebase';
 
@@ -34,6 +37,7 @@ function AppContent() {
 
   const [user, setUser] = useState(null);
   const [showNewMemberForm, setShowNewMemberForm] = useState(false);
+  const [showAdminAuth, setShowAdminAuth] = useState(false);
 
   useEffect(() => {
     localStorage.setItem('meetings', JSON.stringify(meetings));
@@ -45,7 +49,7 @@ function AppContent() {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
         const userData = {
-          id: user.uid,
+          uid: user.uid,
           name: user.displayName,
           email: user.email,
           photoURL: user.photoURL,
@@ -54,15 +58,16 @@ function AppContent() {
 
         try {
           // Firestore에서 멤버 확인
-          const memberRef = doc(db, 'members', userData.id);
-          const memberDoc = await getDoc(memberRef);
+          const membersRef = collection(db, 'members');
+          const q = query(membersRef, where("email", "==", userData.email));
+          const querySnapshot = await getDocs(q);
           
-          if (!memberDoc.exists()) {
+          if (querySnapshot.empty) {
             console.log('새 사용자 감지됨:', userData.email);
             setShowNewMemberForm(true);
           } else {
             console.log('기존 멤버 로그인:', userData.email);
-            setShowNewMemberForm(false); // 명시적으로 false 설정
+            setShowNewMemberForm(false);
           }
         } catch (error) {
           console.error('멤버 확인 실패:', error);
@@ -78,21 +83,17 @@ function AppContent() {
 
   // Firestore에서 멤버 데이터 실시간 동기화
   useEffect(() => {
-    if (!user) return; // 로그인한 경우에만 실행
+    if (!user) return;
+
+    console.log('현재 로그인한 사용자:', user);  // 디버깅용
 
     const membersRef = collection(db, 'members');
-    const unsubscribe = onSnapshot(membersRef, (snapshot) => {
-      const loadedMembers = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-      setMembers(loadedMembers);
-      
-      // 현재 로그인한 사용자가 이미 등록된 멤버인지 확인
-      const isExistingMember = loadedMembers.some(member => member.id === user.uid);
-      if (!isExistingMember) {
-        setShowNewMemberForm(true);  // 신규 사용자만 폼 표시
-      }
+    const q = query(membersRef, where("uid", "==", user.uid));  // uid로 정확히 검색
+    
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const isExistingMember = !snapshot.empty;
+      console.log('기존 회원 여부:', isExistingMember);  // 디버깅용
+      setShowNewMemberForm(!isExistingMember);
     });
 
     return () => unsubscribe();
@@ -194,15 +195,51 @@ function AppContent() {
     }
   };
 
+  // Firestore에서 멤버 데이터 가져오기
+  useEffect(() => {
+    const membersRef = collection(db, 'members');
+    const unsubscribe = onSnapshot(membersRef, (snapshot) => {
+      const loadedMembers = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      console.log('로드된 멤버:', loadedMembers); // 디버깅용
+      setMembers(loadedMembers);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
   // 새 멤버 등록
   const handleNewMember = async (memberData) => {
     try {
       const membersRef = collection(db, 'members');
-      await addDoc(membersRef, memberData);
-      setShowNewMemberForm(false);  // 성공적으로 저장된 경우에만 폼 닫기
+      await addDoc(membersRef, {
+        ...memberData,
+        email: user.email,
+        uid: user.uid,
+        photoURL: user.photoURL,
+        createdAt: new Date().toISOString()
+      });
+      
+      console.log('새 멤버 등록 완료');
+      setShowNewMemberForm(false);
     } catch (error) {
       console.error('모임원 등록 실패:', error);
       alert('모임원 등록에 실패했습니다.');
+    }
+  };
+
+  // 관리자 클릭 핸들러 추가
+  const handleAdminClick = () => {
+    setShowAdminAuth(true);
+  };
+
+  // 관리자 인증 완료 핸들러 추가
+  const handleAdminAuth = (success) => {
+    setShowAdminAuth(false);
+    if (success) {
+      navigate('/admin/members');
     }
   };
 
@@ -245,10 +282,10 @@ function AppContent() {
 
             <Routes>
               <Route path="/" element={
-                <MemberStatus 
-                  members={members} 
-                  onAdminClick={() => handleAdminAccess()}  // 변경
-                />
+                <>
+                  <MemberStatus members={members} onAdminClick={handleAdminClick} />
+                  {/* ... 다른 컴포넌트들 ... */}
+                </>
               } />
               <Route path="/calculate" element={
                 <>
@@ -327,6 +364,11 @@ function AppContent() {
               onClose={() => setShowNewMemberForm(false)}
               onSubmit={handleNewMember}
               userData={user || {}}
+            />
+          )}
+          {showAdminAuth && (
+            <AdminAuth 
+              onAuth={handleAdminAuth}
             />
           )}
         </>
