@@ -12,6 +12,14 @@ import Login from './components/Login';
 import { auth } from './firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import NewMemberForm from './components/NewMemberForm';
+import { 
+  collection, 
+  getDocs, 
+  setDoc, 
+  doc,
+  onSnapshot 
+} from 'firebase/firestore';
+import { db } from './firebase';
 
 function AppContent() {
   const [meetings, setMeetings] = useState(() => {
@@ -119,41 +127,48 @@ function AppContent() {
   };
 
   // 로그인 처리
-  const handleLogin = (userData) => {
-    setUser(userData);
-    // localStorage에서 members 다시 로드
-    const savedMembers = JSON.parse(localStorage.getItem('members') || '[]');
-    const existingMember = savedMembers.find(m => m.id === userData.id);
-    
-    if (!existingMember) {
-      setShowNewMemberForm(true);
+  const handleLogin = async (userData) => {
+    try {
+      setUser(userData);
+      
+      // 이미 가입한 멤버인지 확인
+      const memberDoc = await getDocs(doc(db, 'members', userData.id));
+      
+      if (!memberDoc.exists()) {
+        console.log('새 사용자 감지됨:', userData.email); // 디버깅용
+        setShowNewMemberForm(true);
+      } else {
+        console.log('기존 멤버 로그인:', userData.email); // 디버깅용
+      }
+    } catch (error) {
+      console.error('로그인 처리 에러:', error);
     }
   };
 
   // 새 멤버 등록
-  const handleNewMember = (memberData) => {
-    const updatedMembers = [...members, memberData];
-    setMembers(updatedMembers);
-    localStorage.setItem('members', JSON.stringify(updatedMembers));
-    setShowNewMemberForm(false);
+  const handleNewMember = async (memberData) => {
+    try {
+      // Firestore에 저장
+      await setDoc(doc(db, 'members', memberData.id), {
+        ...memberData,
+        createdAt: new Date().toISOString()
+      });
+      
+      console.log('새 멤버 등록됨:', memberData); // 디버깅용
+      setShowNewMemberForm(false);
+    } catch (error) {
+      console.error('멤버 등록 에러:', error);
+      alert('멤버 등록에 실패했습니다. 다시 시도해주세요.');
+    }
   };
 
-  if (loading) {
-    return (
-      <Box sx={{ 
-        display: 'flex', 
-        justifyContent: 'center', 
-        alignItems: 'center', 
-        height: '100vh' 
-      }}>
-        <CircularProgress />
-      </Box>
-    );
-  }
-
-  if (!user) {
-    return <Login onLogin={handleLogin} />;
-  }
+  // MemberStatus 컴포넌트에 전달
+  const memberStats = {
+    total: members.length,
+    male: members.filter(m => m.gender === '남성').length,
+    female: members.filter(m => m.gender === '여성').length,
+    // ... 기타 통계
+  };
 
   return (
     <>
