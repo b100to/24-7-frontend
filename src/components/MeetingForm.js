@@ -16,6 +16,7 @@ import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import { format } from 'date-fns';
 
 function MeetingForm({ onSave, members }) {
   // localStorage에서 폼 데이터 불러오기
@@ -108,39 +109,20 @@ function MeetingForm({ onSave, members }) {
     setRounds(newRounds);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // 유효성 검사
-    for (const round of rounds) {
-      if (round.participants.some(p => !p.name.trim())) {
-        alert(`${round.round}차 참가자 이름을 모두 입력해주세요.`);
-        return;
-      }
-      if (!round.totalAmount) {
-        alert(`${round.round}차 총 금액을 입력해주세요.`);
-        return;
-      }
-    }
-
-    // 정산 데이터 생성
-    const meetingsData = rounds.map(round => ({
-      round: `${round.round}차`,
+    const meetingsData = rounds.map((round, index) => ({
+      round: index + 1,
       location: round.location,
-      participants: round.participants.map(p => p.name),
-      totalAmount: Number(round.totalAmount),
-      perPerson: Math.round(Number(round.totalAmount) / round.participants.length),
-      date: new Date().toLocaleDateString()
+      totalAmount: round.totalAmount,
+      participants: round.participants.map(p => p.name).filter(Boolean),
+      perPerson: Math.round(round.totalAmount / round.participants.length),
+      date: format(new Date(), 'yyyy-MM-dd')
     }));
 
-    // 모든 차수 정산 데이터를 한 번에 저장
     onSave(meetingsData);
-    
-    // 성공 메시지 표시
-    alert('정산이 완료되었습니다!');
-    
-    // localStorage에서 폼 데이터 유지
-    localStorage.setItem('formRounds', JSON.stringify(rounds));
+    setRounds([{ location: '', totalAmount: '', participants: [{ name: '' }] }]);
   };
 
   // 폼 초기화 함수
@@ -273,7 +255,7 @@ function MeetingForm({ onSave, members }) {
           <Box key={roundIndex} sx={{ mb: 4 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
               <Typography variant="h6" sx={{ flex: 1 }}>
-                {round.round}차
+                {roundIndex + 1}차
               </Typography>
               {roundIndex > 0 && (  // 2차부터 복사 버튼 표시
                 <Tooltip title="이전 차수 참가자 복사">

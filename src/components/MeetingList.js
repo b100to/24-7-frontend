@@ -37,13 +37,13 @@ function MeetingList({ meetings, onDelete }) {
   return (
     <Paper sx={{ p: 3 }}>
       {meetings.map((meeting, index) => (
-        <Box key={index} sx={{ mb: 4 }}>
+        <Box key={meeting.id || index} sx={{ mb: 4 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
             <Typography variant="h6" sx={{ flex: 1 }}>
               [{meeting.round} 정산 내역{meeting.location ? ` - ${meeting.location}` : ''}]
             </Typography>
             <IconButton 
-              onClick={() => onDelete(index)}
+              onClick={() => onDelete(meeting.id)}
               color="error"
               size="small"
             >
@@ -52,17 +52,10 @@ function MeetingList({ meetings, onDelete }) {
           </Box>
 
           <Typography variant="body1" sx={{ mb: 1 }}>
-            •총 금액
+            총 금액: {meeting.totalAmount?.toLocaleString()}원
           </Typography>
-          <Typography variant="body1" sx={{ mb: 2, pl: 2 }}>
-            {meeting.totalAmount.toLocaleString()}원
-          </Typography>
-
-          <Typography variant="body1" sx={{ mb: 1 }}>
-            •참석자
-          </Typography>
-          <Typography variant="body1" sx={{ mb: 2, pl: 2 }}>
-            {meeting.participants.join(' / ')} ({meeting.participants.length}명)
+          <Typography variant="body2" color="text.secondary">
+            참석자: {meeting.participants.join(' / ')} ({meeting.participants.length}명)
           </Typography>
 
           {index < meetings.length - 1 && (
