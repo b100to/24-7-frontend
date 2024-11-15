@@ -27,6 +27,8 @@ import EditIcon from '@mui/icons-material/Edit';
 import { format } from 'date-fns';  // 날짜 포맷팅을 위해 추가
 import { ko } from 'date-fns/locale';  // 한국어 로케일
 import { useNavigate } from 'react-router-dom';
+import { collection, addDoc, updateDoc, deleteDoc, doc } from 'firebase/firestore';
+import { db } from '../firebase';
 
 // 서울시 구 목록
 const SEOUL_DISTRICTS = [
@@ -34,7 +36,7 @@ const SEOUL_DISTRICTS = [
   '광진구', '구로구', '금천구', '노원구', '도봉구',
   '동대문구', '동작구', '마포구', '서대문구', '서초구',
   '성동구', '성북구', '송파구', '양천구', '영등포구',
-  '용산구', '은평구', '종로구', '중구', '중랑구'
+  '용산구', '��평구', '종로구', '중구', '중랑구'
 ].sort();  // 가나다순 정렬
 
 function MemberList({ members, setMembers }) {
@@ -45,10 +47,7 @@ function MemberList({ members, setMembers }) {
     birthYear: '',
     gender: '',
     location: '',
-    note: '',
-    joinDate: format(new Date(), 'yyyy-MM-dd'),
-    isNewbie: true,
-    isStaff: false,
+    note: ''
   });
   const navigate = useNavigate();
 
@@ -88,42 +87,129 @@ function MemberList({ members, setMembers }) {
     return currentYear - birthYear;
   };
 
-  const handleAddMember = () => {
-    if (newMember.name.trim()) {
-      if (editingIndex !== null) {
-        // 수정 모드
-        const updatedMembers = [...members];
-        updatedMembers[editingIndex] = newMember;
-        setMembers(updatedMembers);
-        setEditingIndex(null);
-      } else {
-        // 추가 모드
-        setMembers([...members, newMember]);
-      }
+  // 새 모임원 추가
+  const handleAddMember = async () => {
+    try {
+      // 새 멤버 데이터 준비
+      const memberData = {
+        ...newMember,
+        joinDate: format(new Date(), 'yyyy-MM-dd'),
+        isNewbie: true,
+        createdAt: new Date().toISOString()
+      };
+
+      // Firestore에 추가
+      const docRef = await addDoc(collection(db, 'members'), memberData);
+      
+      // ID를 포함한 최종 데이터
+      const addedMember = {
+        id: docRef.id,
+        ...memberData
+      };
+
+      console.log('새 모임원 추가됨:', addedMember);
+      
+      // 로컬 상태 업데이트
+      setMembers(prev => [...prev, addedMember]);
+      
+      // 폼 초기화
+      setOpenDialog(false);
       setNewMember({
         name: '',
         birthYear: '',
         gender: '',
         location: '',
-        note: '',
-        joinDate: format(new Date(), 'yyyy-MM-dd'),
-        isNewbie: true,
-        isStaff: false,
+        note: ''
       });
-      setOpenDialog(false);
+    } catch (error) {
+      console.error('모임원 추가 실패:', error);
+      alert('모임원 추가에 실패했습니다.');
     }
   };
 
-  const handleEditMember = (index) => {
+  // 수정 버튼 클릭 시
+  const handleEdit = (index) => {
+    const memberToEdit = members[index];
+    setNewMember({
+      name: memberToEdit.name,
+      birthYear: memberToEdit.birthYear,
+      gender: memberToEdit.gender,
+      location: memberToEdit.location,
+      note: memberToEdit.note || ''
+    });
     setEditingIndex(index);
-    setNewMember(members[index]);
     setOpenDialog(true);
   };
 
-  const handleDeleteMember = (index) => {
-    if (window.confirm('정말 삭제하시겠습니까?')) {
-      const newMembers = members.filter((_, i) => i !== index);
-      setMembers(newMembers);
+  // 모임원 수정
+  const handleEditMember = async () => {
+    try {
+      const memberToUpdate = members[editingIndex];
+      const memberRef = doc(db, 'members', memberToUpdate.id);
+      
+      const updatedData = {
+        ...memberToUpdate,
+        name: newMember.name,
+        birthYear: newMember.birthYear,
+        gender: newMember.gender,
+        location: newMember.location,
+        note: newMember.note,
+        updatedAt: new Date().toISOString()
+      };
+
+      // Firestore 업데이트
+      await updateDoc(memberRef, updatedData);
+      
+      // 로컬 상태 업데이트
+      const updatedMembers = [...members];
+      updatedMembers[editingIndex] = updatedData;
+      setMembers(updatedMembers);
+      
+      console.log('모임원 수정됨:', updatedData);
+      
+      // 폼 초기화
+      setOpenDialog(false);
+      setEditingIndex(null);
+      setNewMember({
+        name: '',
+        birthYear: '',
+        gender: '',
+        location: '',
+        note: ''
+      });
+    } catch (error) {
+      console.error('모임원 수정 실패:', error);
+      alert('모임원 수정에 실패했습니다.');
+    }
+  };
+
+  // 모임원 삭제
+  const handleDelete = async (index) => {
+    if (!window.confirm('정말 삭제하시겠습니까?')) return;
+    
+    try {
+      const memberToDelete = members[index];
+      await deleteDoc(doc(db, 'members', memberToDelete.id));
+      
+      setMembers(prev => prev.filter((_, i) => i !== index));
+      console.log('모임원 삭제됨:', memberToDelete);
+    } catch (error) {
+      console.error('모임원 삭제 실패:', error);
+      alert('모임원 삭제에 실패했습니다.');
+    }
+  };
+
+  // 다이얼로그 저장 버튼 핸들러
+  const handleSave = () => {
+    if (!newMember.name || !newMember.birthYear || !newMember.gender || !newMember.location) {
+      alert('모든 필수 항목을 입력해주세요.');
+      return;
+    }
+
+    if (editingIndex !== null) {
+      handleEditMember();
+    } else {
+      handleAddMember();
     }
   };
 
@@ -144,10 +230,7 @@ function MemberList({ members, setMembers }) {
                 birthYear: '',
                 gender: '',
                 location: '',
-                note: '',
-                joinDate: format(new Date(), 'yyyy-MM-dd'),
-                isNewbie: true,
-                isStaff: false,
+                note: ''
               });
               setOpenDialog(true);
             }}
@@ -167,93 +250,39 @@ function MemberList({ members, setMembers }) {
 
       <List>
         {members.map((member, index) => (
-          <React.Fragment key={index}>
+          <React.Fragment key={member.id || index}>
             <ListItem
-              sx={{
-                borderRadius: 1,
-                '&:hover': {
-                  backgroundColor: 'rgba(0, 0, 0, 0.04)'
-                }
-              }}
               secondaryAction={
-                <Box>
-                  <IconButton
-                    edge="end"
-                    onClick={() => handleEditMember(index)}
+                <>
+                  <IconButton 
+                    edge="end" 
+                    aria-label="edit"
+                    onClick={() => handleEdit(index)}
                     sx={{ mr: 1 }}
                   >
                     <EditIcon />
                   </IconButton>
-                  <IconButton
-                    edge="end"
-                    onClick={() => handleDeleteMember(index)}
+                  <IconButton 
+                    edge="end" 
+                    aria-label="delete"
+                    onClick={() => handleDelete(index)}
                   >
                     <DeleteIcon />
                   </IconButton>
-                </Box>
+                </>
               }
             >
               <ListItemAvatar>
-                <Avatar 
-                  src={member?.photoURL || ''} 
-                  alt={member?.name || '멤버'}
-                >
-                  {member?.name?.[0] || '?'}
+                <Avatar src={member.photoURL}>
+                  {member.name?.[0]}
                 </Avatar>
               </ListItemAvatar>
               <ListItemText
                 primary={
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Typography variant="subtitle1" component="span">
+                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                    <Typography component="span">
                       {member.name}
-                      {member.birthYear && (
-                        <Typography 
-                          component="span" 
-                          sx={{ 
-                            color: 'text.secondary',
-                            ml: 1,
-                            fontSize: '0.9rem'
-                          }}
-                        >
-                          {formatBirthYear(member.birthYear)}년생
-                          {` (${calculateAge(member.birthYear)}세)`}
-                        </Typography>
-                      )}
                     </Typography>
-                    <Box sx={{ display: 'flex', gap: 1 }}>
-                      {member.isStaff && (
-                        <Typography
-                          variant="caption"
-                          sx={{
-                            backgroundColor: '#e91e63',
-                            color: 'white',
-                            px: 1,
-                            py: 0.5,
-                            borderRadius: 1,
-                            fontSize: '0.7rem',
-                            fontWeight: 'bold',
-                            letterSpacing: '0.5px'
-                          }}
-                        >
-                          STAFF
-                        </Typography>
-                      )}
-                      {member.isNewbie && (
-                        <Typography
-                          variant="caption"
-                          sx={{
-                            backgroundColor: '#ff5722',
-                            color: 'white',
-                            px: 1,
-                            py: 0.5,
-                            borderRadius: 1,
-                            fontSize: '0.7rem'
-                          }}
-                        >
-                          NEW
-                        </Typography>
-                      )}
-                    </Box>
                   </Box>
                 }
                 secondary={
@@ -262,7 +291,7 @@ function MemberList({ members, setMembers }) {
                       {[
                         member.gender,
                         member.location,
-                        `가입: ${formatDate(member.joinDate)}`,
+                        `가입: ${member.joinDate}`,
                         member.note
                       ].filter(Boolean).join(' • ')}
                     </Typography>
@@ -276,7 +305,17 @@ function MemberList({ members, setMembers }) {
       </List>
 
       {/* 추가/수정 다이얼로그 */}
-      <Dialog open={openDialog} onClose={() => setOpenDialog(false)} maxWidth="sm" fullWidth>
+      <Dialog open={openDialog} onClose={() => {
+        setOpenDialog(false);
+        setEditingIndex(null);
+        setNewMember({
+          name: '',
+          birthYear: '',
+          gender: '',
+          location: '',
+          note: ''
+        });
+      }} maxWidth="sm" fullWidth>
         <DialogTitle>
           {editingIndex !== null ? '모임원 수정' : '새 모임원 추가'}
         </DialogTitle>
@@ -402,7 +441,7 @@ function MemberList({ members, setMembers }) {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setOpenDialog(false)}>취소</Button>
-          <Button onClick={handleAddMember} variant="contained">
+          <Button onClick={handleSave} variant="contained">
             {editingIndex !== null ? '수정' : '추가'}
           </Button>
         </DialogActions>

@@ -18,7 +18,8 @@ import {
   setDoc, 
   doc,
   onSnapshot,
-  getDoc
+  getDoc,
+  updateDoc
 } from 'firebase/firestore';
 import { db } from './firebase';
 
@@ -32,10 +33,7 @@ function AppContent() {
   const [openAuth, setOpenAuth] = useState(false);
   const navigate = useNavigate();
 
-  const [members, setMembers] = useState(() => {
-    const saved = localStorage.getItem('members');
-    return saved ? JSON.parse(saved) : [];
-  });
+  const [members, setMembers] = useState([]);
 
   const [user, setUser] = useState(() => {
     const saved = localStorage.getItem('user');
@@ -80,14 +78,18 @@ function AppContent() {
   }, []);
 
   useEffect(() => {
-    // Firestore에서 실시간으로 멤버 데이터 가져오기
+    // Firestore에서 멤버 데이터 실시간 동기화
     const membersRef = collection(db, 'members');
+    
     const unsubscribe = onSnapshot(membersRef, (snapshot) => {
       const loadedMembers = snapshot.docs.map(doc => ({
+        id: doc.id,
         ...doc.data()
       }));
-      setMembers(loadedMembers);
       console.log('멤버 데이터 업데이트:', loadedMembers);
+      setMembers(loadedMembers);
+    }, (error) => {
+      console.error('멤버 데이터 로드 실패:', error);
     });
 
     return () => unsubscribe();
