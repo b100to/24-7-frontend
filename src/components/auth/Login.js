@@ -1,13 +1,13 @@
 import React from 'react';
 import { signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
-import { auth } from '../firebase';
-import { 
-  Button, 
-  Paper, 
-  Typography, 
-  Box, 
+import { auth } from '../../firebase';
+import {
+  Button,
+  Paper,
+  Typography,
+  Box,
   Container,
-  CircularProgress 
+  CircularProgress
 } from '@mui/material';
 import GoogleIcon from '@mui/icons-material/Google';
 
@@ -20,16 +20,16 @@ function Login({ onLogin }) {
       setLoading(true);
       setError(null);
       const provider = new GoogleAuthProvider();
-      
+
       provider.setCustomParameters({
         prompt: 'select_account'
       });
 
       const result = await signInWithPopup(auth, provider);
-      
+
       if (result.user) {
         console.log('로그인 성공:', result.user);
-        
+
         // 사용자 정보를 저장
         const userData = {
           uid: result.user.uid,
@@ -37,7 +37,7 @@ function Login({ onLogin }) {
           email: result.user.email,
           photoURL: result.user.photoURL,
         };
-        
+
         console.log('저장된 사용자 정보:', userData);
         onLogin(userData);
       }
@@ -51,10 +51,10 @@ function Login({ onLogin }) {
 
   return (
     <Container maxWidth="sm">
-      <Paper 
-        elevation={3} 
-        sx={{ 
-          p: 4, 
+      <Paper
+        elevation={3}
+        sx={{
+          p: 4,
           mt: 8,
           display: 'flex',
           flexDirection: 'column',
@@ -64,9 +64,9 @@ function Login({ onLogin }) {
         <Typography variant="h4" gutterBottom>
           24/7
         </Typography>
-        <Typography 
-          variant="h6" 
-          sx={{ 
+        <Typography
+          variant="h6"
+          sx={{
             mb: 4,
             color: 'text.secondary',
             textAlign: 'center'
@@ -76,8 +76,8 @@ function Login({ onLogin }) {
         </Typography>
 
         {error && (
-          <Typography 
-            color="error" 
+          <Typography
+            color="error"
             sx={{ mb: 2 }}
           >
             {error}
@@ -90,7 +90,7 @@ function Login({ onLogin }) {
           onClick={handleGoogleLogin}
           disabled={loading}
           size="large"
-          sx={{ 
+          sx={{
             width: '100%',
             py: 1.5,
             fontSize: '1.1rem'

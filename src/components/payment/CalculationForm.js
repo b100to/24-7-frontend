@@ -22,7 +22,7 @@ import RefreshIcon from '@mui/icons-material/Refresh';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import { format } from 'date-fns';
 
-function MeetingForm({ onSave, members }) {
+function CalculationForm({ onSave, members }) {
   // localStorage에서 폼 데이터 불러오기
   const [rounds, setRounds] = useState(() => {
     const savedRounds = localStorage.getItem('formRounds');
@@ -455,4 +455,4 @@ function MeetingForm({ onSave, members }) {
   );
 }
 
-export default MeetingForm;
+export default CalculationForm;

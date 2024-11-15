@@ -28,7 +28,7 @@ import { format } from 'date-fns';  // 날짜 포맷팅을 위해 추가
 import { ko } from 'date-fns/locale';  // 한국어 로케일
 import { useNavigate } from 'react-router-dom';
 import { collection, addDoc, updateDoc, deleteDoc, doc } from 'firebase/firestore';
-import { db } from '../firebase';
+import { db } from '../../firebase';
 
 // 서울시 구 목록
 const SEOUL_DISTRICTS = [
@@ -39,7 +39,7 @@ const SEOUL_DISTRICTS = [
   '용산구', '��평구', '종로구', '중구', '중랑구'
 ].sort();  // 가나다순 정렬
 
-function MemberList({ members, setMembers }) {
+function AdminMemberList({ members, setMembers }) {
   const [openDialog, setOpenDialog] = useState(false);
   const [editingIndex, setEditingIndex] = useState(null);
   const [newMember, setNewMember] = useState({
@@ -100,7 +100,7 @@ function MemberList({ members, setMembers }) {
 
       // Firestore에 추가
       const docRef = await addDoc(collection(db, 'members'), memberData);
-      
+
       // ID를 포함한 최종 데이터
       const addedMember = {
         id: docRef.id,
@@ -108,10 +108,10 @@ function MemberList({ members, setMembers }) {
       };
 
       console.log('새 모임원 추가됨:', addedMember);
-      
+
       // 로컬 상태 업데이트
       setMembers(prev => [...prev, addedMember]);
-      
+
       // 폼 초기화
       setOpenDialog(false);
       setNewMember({
@@ -146,7 +146,7 @@ function MemberList({ members, setMembers }) {
     try {
       const memberToUpdate = members[editingIndex];
       const memberRef = doc(db, 'members', memberToUpdate.id);
-      
+
       const updatedData = {
         ...memberToUpdate,
         name: newMember.name,
@@ -159,14 +159,14 @@ function MemberList({ members, setMembers }) {
 
       // Firestore 업데이트
       await updateDoc(memberRef, updatedData);
-      
+
       // 로컬 상태 업데이트
       const updatedMembers = [...members];
       updatedMembers[editingIndex] = updatedData;
       setMembers(updatedMembers);
-      
+
       console.log('모임원 수정됨:', updatedData);
-      
+
       // 폼 초기화
       setOpenDialog(false);
       setEditingIndex(null);
@@ -186,11 +186,11 @@ function MemberList({ members, setMembers }) {
   // 모임원 삭제
   const handleDelete = async (index) => {
     if (!window.confirm('정말 삭제하시겠습니까?')) return;
-    
+
     try {
       const memberToDelete = members[index];
       await deleteDoc(doc(db, 'members', memberToDelete.id));
-      
+
       setMembers(prev => prev.filter((_, i) => i !== index));
       console.log('모임원 삭제됨:', memberToDelete);
     } catch (error) {
@@ -254,16 +254,16 @@ function MemberList({ members, setMembers }) {
             <ListItem
               secondaryAction={
                 <>
-                  <IconButton 
-                    edge="end" 
+                  <IconButton
+                    edge="end"
                     aria-label="edit"
                     onClick={() => handleEdit(index)}
                     sx={{ mr: 1 }}
                   >
                     <EditIcon />
                   </IconButton>
-                  <IconButton 
-                    edge="end" 
+                  <IconButton
+                    edge="end"
                     aria-label="delete"
                     onClick={() => handleDelete(index)}
                   >
@@ -409,9 +409,9 @@ function MemberList({ members, setMembers }) {
                   control={
                     <Checkbox
                       checked={newMember.isNewbie}
-                      onChange={(e) => setNewMember({ 
-                        ...newMember, 
-                        isNewbie: e.target.checked 
+                      onChange={(e) => setNewMember({
+                        ...newMember,
+                        isNewbie: e.target.checked
                       })}
                       color="primary"
                     />
@@ -422,9 +422,9 @@ function MemberList({ members, setMembers }) {
                   control={
                     <Checkbox
                       checked={newMember.isStaff}
-                      onChange={(e) => setNewMember({ 
-                        ...newMember, 
-                        isStaff: e.target.checked 
+                      onChange={(e) => setNewMember({
+                        ...newMember,
+                        isStaff: e.target.checked
                       })}
                       sx={{
                         '&.Mui-checked': {
@@ -450,4 +450,4 @@ function MemberList({ members, setMembers }) {
   );
 }
 
-export default MemberList; 
+export default AdminMemberList; 

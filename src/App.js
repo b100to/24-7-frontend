@@ -3,18 +3,18 @@ import { BrowserRouter, Routes, Route, Link, useNavigate, Navigate } from 'react
 import { Container, CssBaseline, Box, Typography, BottomNavigation, BottomNavigationAction, Paper, Avatar, Button } from '@mui/material';
 import CalculateIcon from '@mui/icons-material/Calculate';
 import PeopleIcon from '@mui/icons-material/People';
-import MeetingForm from './components/CalculationForm';
-import MeetingList from './components/CalculationHistory';
-import MemberList from './components/MemberList';
-import AdminAuth from './components/AdminAuth';
-import MemberStatus from './components/MemberStatus';
-import Login from './components/Login';
+import MeetingForm from './components/payment/CalculationForm';
+import MeetingList from './components/payment/CalculationHistory';
+import MemberList from './components/admin/MemberList';
+import AdminAuth from './components/auth/AdminAuth';
+import MemberStatus from './components/member/MemberStatus';
+import Login from './components/auth/Login';
 import { auth } from './firebase';
 import { onAuthStateChanged } from 'firebase/auth';
-import NewMemberForm from './components/NewMemberForm';
-import { 
-  collection, 
-  setDoc, 
+import NewMemberForm from './components/member/NewMemberForm';
+import {
+  collection,
+  setDoc,
   doc,
   onSnapshot,
   getDoc,
@@ -61,7 +61,7 @@ function AppContent() {
           const membersRef = collection(db, 'members');
           const q = query(membersRef, where("email", "==", userData.email));
           const querySnapshot = await getDocs(q);
-          
+
           if (querySnapshot.empty) {
             console.log('새 사용자 감지됨:', userData.email);
             setShowNewMemberForm(true);
@@ -89,7 +89,7 @@ function AppContent() {
 
     const membersRef = collection(db, 'members');
     const q = query(membersRef, where("uid", "==", user.uid));  // uid로 정확히 검색
-    
+
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const isExistingMember = !snapshot.empty;
       console.log('기존 회원 여부:', isExistingMember);  // 디버깅용
@@ -121,7 +121,7 @@ function AppContent() {
     try {
       const meetingsRef = collection(db, 'meetings');
       const docRef = await addDoc(meetingsRef, meetingData);
-      
+
       console.log('정산 데이터 저장됨:', { id: docRef.id, ...meetingData });
     } catch (error) {
       console.error('정산 저장 실패:', error);
@@ -144,7 +144,7 @@ function AppContent() {
   // 관리자 권한 체크
   const checkAdminAuth = async () => {
     if (!user) return false;
-    
+
     try {
       const adminRef = doc(db, 'admins', user.id);
       const adminDoc = await getDoc(adminRef);
@@ -179,11 +179,11 @@ function AppContent() {
   const handleLogin = async (userData) => {
     try {
       setUser(userData);
-      
+
       // 이미 가입한 멤버인지 확인
       const memberRef = doc(db, 'members', userData.id);
       const memberDoc = await getDoc(memberRef);
-      
+
       if (!memberDoc.exists()) {
         console.log('새 사용자 감지됨:', userData.email);
         setShowNewMemberForm(true);
@@ -221,7 +221,7 @@ function AppContent() {
         photoURL: user.photoURL,
         createdAt: new Date().toISOString()
       });
-      
+
       console.log('새 멤버 등록 완료');
       setShowNewMemberForm(false);
     } catch (error) {
@@ -251,26 +251,26 @@ function AppContent() {
       ) : (
         <>
           <Container maxWidth={false} disableGutters sx={{ maxWidth: '600px', px: 2, pb: 7 }}>
-            <Box sx={{ 
-              display: 'flex', 
-              justifyContent: 'space-between', 
-              alignItems: 'center', 
-              py: 2 
+            <Box sx={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              py: 2
             }}>
               <Box onClick={() => navigate('/')} sx={{ cursor: 'pointer' }}>
                 <Typography variant="h4">24/7</Typography>
                 <Typography variant="subtitle1">Community Hub</Typography>
               </Box>
-              
+
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                <Avatar 
-                  src={user?.photoURL || ''} 
-                  alt={user?.name || '사용자'} 
+                <Avatar
+                  src={user?.photoURL || ''}
+                  alt={user?.name || '사용자'}
                   sx={{ width: 40, height: 40 }}
                 >
                   {user?.name?.[0] || '?'}
                 </Avatar>
-                <Button 
+                <Button
                   variant="outlined"
                   size="small"
                   onClick={handleLogout}
@@ -289,13 +289,13 @@ function AppContent() {
               } />
               <Route path="/calculate" element={
                 <>
-                  <MeetingForm 
-                    onSave={handleSave} 
+                  <MeetingForm
+                    onSave={handleSave}
                     members={members}
                   />
                   {meetings.length > 0 && (
-                    <MeetingList 
-                      meetings={meetings} 
+                    <MeetingList
+                      meetings={meetings}
                       onDelete={handleDelete}
                     />
                   )}
@@ -303,9 +303,9 @@ function AppContent() {
               } />
               <Route path="/admin" element={
                 checkAdminAuth() ? (  // 인증 상태 확인
-                  <MemberList 
-                    members={members} 
-                    setMembers={setMembers} 
+                  <MemberList
+                    members={members}
+                    setMembers={setMembers}
                   />
                 ) : (
                   <Navigate to="/" replace />  // 인증 안된 경우 메인으로
@@ -313,15 +313,15 @@ function AppContent() {
               } />
             </Routes>
           </Container>
-          
-          <Paper 
-            sx={{ 
-              position: 'fixed', 
-              bottom: 0, 
-              left: 0, 
+
+          <Paper
+            sx={{
+              position: 'fixed',
+              bottom: 0,
+              left: 0,
               right: 0,
               zIndex: 1000
-            }} 
+            }}
             elevation={3}
           >
             <BottomNavigation
@@ -331,15 +331,15 @@ function AppContent() {
               }}
               showLabels
             >
-              <BottomNavigationAction 
-                label="모임원 현황" 
-                icon={<PeopleIcon />} 
+              <BottomNavigationAction
+                label="모임원 현황"
+                icon={<PeopleIcon />}
                 component={Link}
                 to="/"
               />
-              <BottomNavigationAction 
-                label="정산하기" 
-                icon={<CalculateIcon />} 
+              <BottomNavigationAction
+                label="정산하기"
+                icon={<CalculateIcon />}
                 component={Link}
                 to="/calculate"
               />
@@ -347,7 +347,7 @@ function AppContent() {
           </Paper>
 
           {openAuth && (
-            <AdminAuth 
+            <AdminAuth
               onAuth={(success) => {
                 if (success) {
                   navigate('/admin');
@@ -367,7 +367,7 @@ function AppContent() {
             />
           )}
           {showAdminAuth && (
-            <AdminAuth 
+            <AdminAuth
               onAuth={handleAdminAuth}
             />
           )}

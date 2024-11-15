@@ -16,7 +16,7 @@ import axios from 'axios';
 
 const API_URL = 'http://localhost:8080';
 
-function MeetingDetail({ meeting, onBack }) {
+function PaymentDetail({ meeting, onBack }) {
   const [newParticipant, setNewParticipant] = useState({
     name: '',
     amount: ''
@@ -118,4 +118,4 @@ function MeetingDetail({ meeting, onBack }) {
   );
 }
 
-export default MeetingDetail; 
+export default PaymentDetail; 
