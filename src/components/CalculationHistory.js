@@ -7,32 +7,12 @@ import {
   Divider
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
+import { format } from 'date-fns';
 
 function CalculationHistory({ meetings, onDelete }) {
   if (!meetings || meetings.length === 0) {
     return null;
   }
-
-  // 참가자별 총 금액 계산
-  const calculateTotalPerPerson = (meetings) => {
-    const totals = {};
-    meetings.forEach(meeting => {
-      meeting.participants.forEach(participant => {
-        totals[participant] = (totals[participant] || 0) + meeting.perPerson;
-      });
-    });
-    
-    // 같은 금액을 낸 사람들끼리 그룹화
-    const groupedTotals = {};
-    Object.entries(totals).forEach(([person, amount]) => {
-      if (!groupedTotals[amount]) {
-        groupedTotals[amount] = [];
-      }
-      groupedTotals[amount].push(person);
-    });
-    
-    return groupedTotals;
-  };
 
   return (
     <Paper sx={{ p: 3 }}>
@@ -40,7 +20,7 @@ function CalculationHistory({ meetings, onDelete }) {
         <Box key={meeting.id || index} sx={{ mb: 4 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
             <Typography variant="h6" sx={{ flex: 1 }}>
-              [{meeting.round}차 정산 내역{meeting.location ? ` - ${meeting.location}` : ''}]
+              {format(new Date(meeting.date), 'yyyy년 MM월 dd일')} 정산
             </Typography>
             <IconButton 
               onClick={() => onDelete(meeting.id)}
@@ -55,28 +35,36 @@ function CalculationHistory({ meetings, onDelete }) {
             총 금액: {meeting.totalAmount?.toLocaleString()}원
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            참석자: {meeting.participants.join(' / ')} ({meeting.participants.length}명)
+            전체 참가자: {meeting.totalParticipants?.join(' / ')} ({meeting.totalParticipants?.length || 0}명)
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            1인당 평균: {meeting.averagePerPerson?.toLocaleString()}원
           </Typography>
 
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+            정산계좌: {meeting.bankAccount?.bank} {meeting.bankAccount?.accountNumber} ({meeting.bankAccount?.accountHolder})
+          </Typography>
+
+          <Divider sx={{ my: 2 }} />
+
+          {meeting.rounds?.map((round, roundIndex) => (
+            <Box key={roundIndex} sx={{ mb: 2, pl: 2 }}>
+              <Typography variant="body2">
+                {round.round}차 {round.location && `- ${round.location}`}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                • 금액: {round.amount?.toLocaleString()}원
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                • 참가자: {round.participants?.join(' / ')}
+              </Typography>
+            </Box>
+          ))}
+
           {index < meetings.length - 1 && (
-            <Typography sx={{ my: 3, textAlign: 'center', color: 'text.secondary' }}>
-              ***
-            </Typography>
+            <Divider sx={{ my: 3 }} />
           )}
         </Box>
-      ))}
-
-      <Divider sx={{ my: 3 }}>
-        <Typography sx={{ color: 'text.secondary' }}>-----</Typography>
-      </Divider>
-
-      <Typography variant="body1" sx={{ mb: 2 }}>
-        •인당 정산금액
-      </Typography>
-      {Object.entries(calculateTotalPerPerson(meetings)).map(([amount, people], index) => (
-        <Typography key={index} variant="body1" sx={{ mb: 1, pl: 2 }}>
-          {people.join(' / ')} 》 {Number(amount).toLocaleString()}원
-        </Typography>
       ))}
     </Paper>
   );

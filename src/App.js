@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Link, useNavigate, Navigate } from 'react-router-dom';
-import { Container, CssBaseline, Box, Typography, BottomNavigation, BottomNavigationAction, Paper, Avatar, Button, CircularProgress } from '@mui/material';
+import { Container, CssBaseline, Box, Typography, BottomNavigation, BottomNavigationAction, Paper, Avatar, Button } from '@mui/material';
 import CalculateIcon from '@mui/icons-material/Calculate';
 import PeopleIcon from '@mui/icons-material/People';
 import MeetingForm from './components/CalculationForm';
@@ -14,12 +14,10 @@ import { onAuthStateChanged } from 'firebase/auth';
 import NewMemberForm from './components/NewMemberForm';
 import { 
   collection, 
-  getDocs, 
   setDoc, 
   doc,
   onSnapshot,
   getDoc,
-  updateDoc,
   addDoc,
   deleteDoc
 } from 'firebase/firestore';
@@ -35,7 +33,6 @@ function AppContent() {
   const [members, setMembers] = useState([]);
 
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
   const [showNewMemberForm, setShowNewMemberForm] = useState(false);
 
   useEffect(() => {
@@ -74,7 +71,6 @@ function AppContent() {
         setUser(null);
         setShowNewMemberForm(false);
       }
-      setLoading(false);
     });
 
     return () => unsubscribe();
@@ -115,20 +111,15 @@ function AppContent() {
   }, [user]);
 
   // 미팅 저장 핸들러
-  const handleSave = async (meetingsData) => {
+  const handleSave = async (meetingData) => {
     try {
       const meetingsRef = collection(db, 'meetings');
-      for (const meeting of meetingsData) {
-        await addDoc(meetingsRef, {
-          ...meeting,
-          createdAt: new Date().toISOString(),
-          createdBy: user.id
-        });
-      }
-      console.log('미팅 데이터 저장됨');
+      const docRef = await addDoc(meetingsRef, meetingData);
+      
+      console.log('정산 데이터 저장됨:', { id: docRef.id, ...meetingData });
     } catch (error) {
-      console.error('미팅 저장 실패:', error);
-      alert('미팅 저장에 실패했습니다.');
+      console.error('정산 저장 실패:', error);
+      alert('정산 저장에 실패했습니다.');
     }
   };
 
@@ -163,7 +154,7 @@ function AppContent() {
     if (checkAdminAuth()) {
       navigate('/admin');  // 이미 인증된 경우 바로 이동
     } else {
-      setOpenAuth(true);   // 인증 필요한 경우 다이얼로그 표시
+      setOpenAuth(true);   // 인증 필요한 경우 다이로그 표시
     }
   };
 
@@ -213,14 +204,6 @@ function AppContent() {
       console.error('멤버 등록 에러:', error);
       alert('멤버 등록에 실패했습니다. 다시 시도해주세요.');
     }
-  };
-
-  // MemberStatus 컴포넌트에 전달
-  const memberStats = {
-    total: members.length,
-    male: members.filter(m => m.gender === '남성').length,
-    female: members.filter(m => m.gender === '여성').length,
-    // ... 기타 통계
   };
 
   return (

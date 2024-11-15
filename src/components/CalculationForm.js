@@ -10,7 +10,11 @@ import {
   Stack,
   Tooltip,
   Autocomplete,
-  Chip
+  Chip,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
@@ -28,6 +32,13 @@ function MeetingForm({ onSave, members }) {
       totalAmount: '',
       location: ''
     }];
+  });
+
+  // 계좌번호 상태 추가
+  const [bankAccount, setBankAccount] = useState({
+    bank: '',
+    accountNumber: '',
+    accountHolder: ''
   });
 
   // rounds가 변경될 때마다 localStorage에 저장
@@ -112,17 +123,43 @@ function MeetingForm({ onSave, members }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    const meetingsData = rounds.map((round, index) => ({
-      round: index + 1,
-      location: round.location,
-      totalAmount: round.totalAmount,
-      participants: round.participants.map(p => p.name).filter(Boolean),
-      perPerson: Math.round(round.totalAmount / round.participants.length),
-      date: format(new Date(), 'yyyy-MM-dd')
-    }));
+    // 모든 차수의 참가자를 하나의 Set으로 합치기
+    const allParticipants = new Set();
+    let totalAmount = 0;
+    const roundDetails = [];
 
-    onSave(meetingsData);
+    rounds.forEach((round, index) => {
+      const participants = round.participants.map(p => p.name).filter(Boolean);
+      participants.forEach(p => allParticipants.add(p));
+      totalAmount += Number(round.totalAmount);
+
+      roundDetails.push({
+        round: index + 1,
+        location: round.location,
+        amount: Number(round.totalAmount),
+        participants: participants,
+        perPerson: Math.round(round.totalAmount / participants.length)
+      });
+    });
+
+    // 하나의 정산 데이터로 구성
+    const meetingData = {
+      date: format(new Date(), 'yyyy-MM-dd'),
+      totalAmount: totalAmount,
+      totalParticipants: Array.from(allParticipants),
+      averagePerPerson: Math.round(totalAmount / allParticipants.size),
+      rounds: roundDetails,
+      bankAccount: {
+        bank: bankAccount.bank,
+        accountNumber: bankAccount.accountNumber,
+        accountHolder: bankAccount.accountHolder
+      },
+      createdAt: new Date().toISOString()
+    };
+
+    onSave(meetingData);
     setRounds([{ location: '', totalAmount: '', participants: [{ name: '' }] }]);
+    setBankAccount({ bank: '', accountNumber: '', accountHolder: '' }); // 계좌번호 초기화
   };
 
   // 폼 초기화 함수
@@ -248,9 +285,74 @@ function MeetingForm({ onSave, members }) {
     </Box>
   );
 
+  // 한국 주요 은행 목록
+  const bankOptions = [
+    '카카오뱅크',
+    '토스뱅크',
+    'KB국민',
+    '신한',
+    '우리',
+    'NH농협',
+    'IBK기업',
+    'KEB하나',
+    'SC제일',
+    '씨티',
+    '새마을',
+    '우체국',
+    '수협',
+    '신협',
+  ].sort();  // 가나다순 정렬
+
   return (
     <Paper sx={{ p: 3, mb: 3 }}>
       <Box component="form" onSubmit={handleSubmit}>
+        {/* 계좌번호 입력 섹션 */}
+        <Box sx={{ mb: 4 }}>
+          <Typography variant="h6" sx={{ mb: 2 }}>
+            정산 계좌
+          </Typography>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            {/* 첫 번째 줄: 은행 선택과 예금주 */}
+            <Box sx={{ 
+              display: 'flex', 
+              gap: 2,
+              alignItems: 'center'
+            }}>
+              <FormControl sx={{ width: '150px' }}>
+                <InputLabel>은행 선택</InputLabel>
+                <Select
+                  value={bankAccount.bank}
+                  label="은행 선택"
+                  onChange={(e) => setBankAccount({...bankAccount, bank: e.target.value})}
+                >
+                  {bankOptions.map((bank) => (
+                    <MenuItem key={bank} value={bank}>
+                      {bank}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              <TextField
+                label="예금주"
+                value={bankAccount.accountHolder}
+                onChange={(e) => setBankAccount({...bankAccount, accountHolder: e.target.value})}
+                sx={{ width: '120px' }}
+              />
+            </Box>
+            
+            {/* 두 번째 줄: 계좌번호 */}
+            <TextField
+              label="계좌번호"
+              value={bankAccount.accountNumber}
+              onChange={(e) => setBankAccount({...bankAccount, accountNumber: e.target.value})}
+              fullWidth
+              placeholder="- 없이 입력"
+            />
+          </Box>
+        </Box>
+
+        <Divider sx={{ my: 3 }} />
+
         {rounds.map((round, roundIndex) => (
           <Box key={roundIndex} sx={{ mb: 4 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
