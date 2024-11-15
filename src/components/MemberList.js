@@ -18,6 +18,8 @@ import {
   DialogActions,
   Checkbox,
   FormControlLabel,
+  ListItemAvatar,
+  Avatar,
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
@@ -192,6 +194,14 @@ function MemberList({ members, setMembers }) {
                 </Box>
               }
             >
+              <ListItemAvatar>
+                <Avatar 
+                  src={member?.photoURL || ''} 
+                  alt={member?.name || '멤버'}
+                >
+                  {member?.name?.[0] || '?'}
+                </Avatar>
+              </ListItemAvatar>
               <ListItemText
                 primary={
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>

@@ -189,178 +189,127 @@ function AppContent() {
   return (
     <>
       <CssBaseline />
-      <Container 
-        maxWidth={false} 
-        disableGutters 
-        sx={{
-          maxWidth: '600px',
-          px: 2,
-          pb: 7
-        }}
-      >
-        <Box 
-          sx={{ 
-            display: 'flex', 
-            justifyContent: 'space-between', 
-            alignItems: 'center', 
-            py: 2 
-          }}
-        >
-          <Box 
-            onClick={() => navigate('/')} 
-            sx={{ 
-              cursor: 'pointer',
-              '&:hover': {
-                opacity: 0.8
-              },
-              transition: 'opacity 0.2s'
-            }}
-          >
-            <Typography 
-              variant="h4"
-              sx={{ 
-                mb: 0.5,
-                fontWeight: 'bold',
-                color: 'primary.main',
-                fontSize: { 
-                  xs: '2.2rem',
-                  sm: '2.7rem'
-                },
-                letterSpacing: '-0.5px',
-                textAlign: 'center'
-              }}
-            >
-              24/7
-            </Typography>
-            <Typography 
-              variant="h6"
-              sx={{ 
-                color: 'text.secondary',
-                textAlign: 'center',
-                fontWeight: 500,
-                letterSpacing: '1px',
-                mb: 3,
-                fontSize: { 
-                  xs: '1.1rem',
-                  sm: '1.3rem'
-                },
-                textTransform: 'uppercase'
-              }}
-            >
-              Community Hub
-            </Typography>
-          </Box>
-          
-          <Box 
-            sx={{ 
+      {!user ? (
+        <Login onLogin={handleLogin} />
+      ) : (
+        <>
+          <Container maxWidth={false} disableGutters sx={{ maxWidth: '600px', px: 2, pb: 7 }}>
+            <Box sx={{ 
               display: 'flex', 
+              justifyContent: 'space-between', 
               alignItems: 'center', 
-              gap: 2 
-            }}
+              py: 2 
+            }}>
+              <Box onClick={() => navigate('/')} sx={{ cursor: 'pointer' }}>
+                <Typography variant="h4">24/7</Typography>
+                <Typography variant="subtitle1">Community Hub</Typography>
+              </Box>
+              
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <Avatar 
+                  src={user?.photoURL || ''} 
+                  alt={user?.name || '사용자'} 
+                  sx={{ width: 40, height: 40 }}
+                >
+                  {user?.name?.[0] || '?'}
+                </Avatar>
+                <Button 
+                  variant="outlined"
+                  size="small"
+                  onClick={handleLogout}
+                >
+                  로그아웃
+                </Button>
+              </Box>
+            </Box>
+
+            <Routes>
+              <Route path="/" element={
+                <MemberStatus 
+                  members={members} 
+                  onAdminClick={() => handleAdminAccess()}  // 변경
+                />
+              } />
+              <Route path="/calculate" element={
+                <>
+                  <MeetingForm 
+                    onSave={handleSave} 
+                    members={members}
+                  />
+                  {meetings.length > 0 && (
+                    <MeetingList 
+                      meetings={meetings} 
+                      onDelete={handleDelete}
+                    />
+                  )}
+                </>
+              } />
+              <Route path="/admin" element={
+                checkAdminAuth() ? (  // 인증 상태 확인
+                  <MemberList 
+                    members={members} 
+                    setMembers={setMembers} 
+                  />
+                ) : (
+                  <Navigate to="/" replace />  // 인증 안된 경우 메인으로
+                )
+              } />
+            </Routes>
+          </Container>
+          
+          <Paper 
+            sx={{ 
+              position: 'fixed', 
+              bottom: 0, 
+              left: 0, 
+              right: 0,
+              zIndex: 1000
+            }} 
+            elevation={3}
           >
-            <Avatar 
-              src={user.photoURL} 
-              alt={user.name}
-              sx={{ 
-                width: 40, 
-                height: 40 
+            <BottomNavigation
+              value={value}
+              onChange={(event, newValue) => {
+                setValue(newValue);
+              }}
+              showLabels
+            >
+              <BottomNavigationAction 
+                label="모임원 현황" 
+                icon={<PeopleIcon />} 
+                component={Link}
+                to="/"
+              />
+              <BottomNavigationAction 
+                label="정산하기" 
+                icon={<CalculateIcon />} 
+                component={Link}
+                to="/calculate"
+              />
+            </BottomNavigation>
+          </Paper>
+
+          {openAuth && (
+            <AdminAuth 
+              onAuth={(success) => {
+                if (success) {
+                  navigate('/admin');
+                }
+                setOpenAuth(false);
               }}
             />
-            <Button 
-              variant="outlined"
-              size="small"
-              onClick={handleLogout}
-            >
-              로그아웃
-            </Button>
-          </Box>
-        </Box>
+          )}
 
-        <Routes>
-          <Route path="/" element={
-            <MemberStatus 
-              members={members} 
-              onAdminClick={() => handleAdminAccess()}  // 변경
+          {/* 새 멤버 등록 폼 */}
+          {showNewMemberForm && (
+            <NewMemberForm
+              open={showNewMemberForm}
+              onClose={() => setShowNewMemberForm(false)}
+              onSubmit={handleNewMember}
+              userData={user || {}}
             />
-          } />
-          <Route path="/calculate" element={
-            <>
-              <MeetingForm 
-                onSave={handleSave} 
-                members={members}
-              />
-              {meetings.length > 0 && (
-                <MeetingList 
-                  meetings={meetings} 
-                  onDelete={handleDelete}
-                />
-              )}
-            </>
-          } />
-          <Route path="/admin" element={
-            checkAdminAuth() ? (  // 인증 상태 확인
-              <MemberList 
-                members={members} 
-                setMembers={setMembers} 
-              />
-            ) : (
-              <Navigate to="/" replace />  // 인증 안된 경우 메인으로
-            )
-          } />
-        </Routes>
-      </Container>
-
-      <Paper 
-        sx={{ 
-          position: 'fixed', 
-          bottom: 0, 
-          left: 0, 
-          right: 0,
-          zIndex: 1000
-        }} 
-        elevation={3}
-      >
-        <BottomNavigation
-          value={value}
-          onChange={(event, newValue) => {
-            setValue(newValue);
-          }}
-          showLabels
-        >
-          <BottomNavigationAction 
-            label="모임원 현황" 
-            icon={<PeopleIcon />} 
-            component={Link}
-            to="/"
-          />
-          <BottomNavigationAction 
-            label="정산하기" 
-            icon={<CalculateIcon />} 
-            component={Link}
-            to="/calculate"
-          />
-        </BottomNavigation>
-      </Paper>
-
-      {openAuth && (
-        <AdminAuth 
-          onAuth={(success) => {
-            if (success) {
-              navigate('/admin');
-            }
-            setOpenAuth(false);
-          }}
-        />
-      )}
-
-      {/* 새 멤버 등록 폼 */}
-      {showNewMemberForm && (
-        <NewMemberForm
-          open={showNewMemberForm}
-          onClose={() => setShowNewMemberForm(false)}
-          onSubmit={handleNewMember}
-          userData={user}
-        />
+          )}
+        </>
       )}
     </>
   );
